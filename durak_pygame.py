@@ -11,6 +11,7 @@ table_def_deck = []    # defence deck
 full_card_deck = []    # all cards deck
 trump_card     = ''    # trump card
 animation_list = []
+all_addable_cards = []
 
 
 def create_deck():
@@ -103,6 +104,61 @@ def defence_button(number,player_deck):
     else:
         return False
 
+def all_addable_cards_calc():
+    """calculating all addable cards"""
+    global all_addable_cards
+    all_addable_cards = []
+    for cards in table_at_deck:
+        all_addable_cards.append(cards[-2:])
+    for cards in table_def_deck:
+        all_addable_cards.append(cards[-2:])
+
+def attack_calc(bot_move) -> str:
+    print(bot_move)
+    return random.choice(bot_move)
+
+def defence_calc(bot_move) -> str:
+    print(bot_move)
+    return random.choice(bot_move)
+
+def bot_brain(player_deck):
+    global all_addable_cards
+    # bot attack moves !!!
+    bot_move = []
+    # check if player is attacking
+    if (attack_player == 2 and player_deck == player2_deck) or (attack_player == 1 and player_deck == player1_deck):
+        if len(table_at_deck) == len(table_def_deck):
+            for cards in player_deck:
+                if not table_at_deck or cards[-2:] in all_addable_cards:
+                    bot_move.append(cards)
+            if not bot_move:
+                player_change_at(player_deck)
+            else:
+                final_move = attack_calc(bot_move)
+                if final_move == "":
+                    player_change_at(player_deck)
+                else:
+                    table_at_deck.append(final_move)
+                    player_deck.remove(final_move)
+    # bot defence moves !!!
+    if (attack_player == 1 and player_deck == player2_deck) or (attack_player == 2 and player_deck == player1_deck):
+        if len(table_at_deck) > len(table_def_deck):
+            for cards in player2_deck:
+                if cards[-2:] > table_at_deck[-1][-2:] and cards[0] == table_at_deck[-1][0]:
+                    bot_move.append(cards)
+                if cards[0] == trump_card[0] and table_at_deck[-1][0] != trump_card[0]:
+                    bot_move.append(cards)
+            if not bot_move:
+                player_change_def(player_deck)
+                print('not working')
+            else:
+                final_move = defence_calc(bot_move)
+                if final_move == "":
+                    player_change_def(player_deck)
+                else:
+                    table_at_deck.append(final_move)
+                    player_deck.remove(final_move)
+
 # creating decks
 create_deck()
 take_from_deck(player1_deck,False)
@@ -184,51 +240,8 @@ card_pos_dict = {
 
 # main cycle
 while running:
-    # win check
-    win_check()
-
-    # bot attack moves !!!
-    all_addable_cards = []
-    for card in table_at_deck:      # which cards can be added
-        all_addable_cards.append(card[-2:])
-    for card in table_def_deck:
-        all_addable_cards.append(card[-2:])
-    if attack_player == 2 and len(table_at_deck) == len(table_def_deck):
-        bot_move = []
-        for card in player2_deck:
-            if table_at_deck == [] or card[-2:] in all_addable_cards:
-                if not bot_move and table_at_deck == []:
-                    bot_move.append(card)
-                if bot_move and card[0] != trump_card[0]:
-                    print('rule2')
-                    bot_move.append(card)
-        print(all_addable_cards)
-        print(player2_deck)
-        print(bot_move)
-        if not bot_move:
-            player_change_at(player2_deck)
-        else:
-            print('at works')
-            real_bot_move = random.choice(bot_move)
-            table_at_deck.append(real_bot_move)
-            player2_deck.remove(real_bot_move)
-
-    # bot defence moves !!!
-    if attack_player == 1 and len(table_at_deck) > len(table_def_deck):
-        bot_move = []
-        for card in player2_deck:
-            if card[-2:] > table_at_deck[-1] and card[0] == table_at_deck[-1][0]:
-                bot_move.append(card)
-            if card[0] == trump_card[0] and table_at_deck[-1][0] != trump_card[0]:
-                bot_move.append(card)
-        print(bot_move)
-        if not bot_move:
-            player_change_def(player2_deck)
-        else:
-            print('def works')
-            real_bot_move = random.choice(bot_move)
-            table_def_deck.append(real_bot_move)
-            player2_deck.remove(real_bot_move)
+    all_addable_cards_calc()
+    bot_brain(player2_deck)
 
     """ INPUT """
     # mouse on card input
@@ -362,6 +375,7 @@ while running:
                 anim_bool = True
 
     # if anyone wins
+    win_check()
     if player1_won:
         screen.fill((0, 55, 0))
         font = pygame.font.Font(None, 150)
