@@ -7,23 +7,21 @@ player1_deck      = []    # player deck
 player2_deck      = []    # bot deck
 table_at_deck     = []    # attack deck
 table_def_deck    = []    # defence deck
-full_card_deck    = []    # all cards deck
-trump_card        = ''    # trump card
 animation_list    = []    # list with cards to animate(fron deck to player)
 all_addable_cards = []    # list of cards to add when attacking (only numbers)
+trump_card        = ''    # trump card
 
 """Game Functions"""
 
 def create_deck():
     """creating a deck of cards"""
-    global full_card_deck , trump_card
+    global trump_card
     card_types = ['06', '07', '08', '09', '10', '12', '13', '14', '15']
     suit_types = ['s', 'h', 'd', 'c']
     for cards in card_types:
         for suit in suit_types:
             card_deck.append(suit + cards)
     random.shuffle(card_deck)
-    full_card_deck = card_deck.copy()
     trump_card = card_deck[0]
 
 def take_from_deck(player_deck,animation_active = True):
@@ -32,10 +30,11 @@ def take_from_deck(player_deck,animation_active = True):
     while player_take:
         if card_deck != [] and len(player_deck) < 6:
             if animation_active:
+                card_info = len(player_deck)
                 if player_deck == player1_deck:
-                    animation_list.append(('pla','back'))
+                    animation_list.append(('pl1',card_info))
                 else:
-                    animation_list.append(('bot','back'))
+                    animation_list.append(('pl2',card_info))
             player_deck.append(card_deck.pop()) #pop(-1)
         else:
             player_take = False
@@ -116,18 +115,58 @@ def all_addable_cards_calc():
 """Bot Brain Functions"""
 
 def attack_calc(bot_move) -> str:
-    print(bot_move)
-    return random.choice(bot_move)
+    # choosing the card
+    found_good_card = False
+    main_card = 'x20'
+    for cards in bot_move:
+        if int(cards[-2:]) < int(main_card[-2:]) and cards[0] != trump_card[0]:
+            main_card = cards
+            found_good_card = True
+    if main_card == 'x20':
+        for cards in bot_move:
+            if int(cards[-2:]) < int(main_card[-2:]):
+                main_card = cards
+    if main_card == 'x20':
+        main_card = bot_move[0]
+    # if it is the first move, there is a good card or deck is empty
+    if not table_at_deck or found_good_card or not card_deck:
+        return main_card
+    else:
+        return ""
 
-def defence_calc(bot_move) -> str:
-    print(bot_move)
-    return random.choice(bot_move)
+
+
+def defence_calc(bot_move,player_deck) -> str:
+    # choosing the card
+    found_good_card = False
+    found_mid_card = False
+    main_card = 'x20'
+    for cards in bot_move:
+        if int(cards[-2:]) < int(main_card[-2:]) and cards[0] != trump_card[0]:
+            main_card = cards
+            found_good_card = True
+    if main_card == 'x20':
+        for cards in bot_move:
+            if int(cards[-2:]) < int(main_card[-2:]):
+                main_card = cards
+                found_mid_card = True
+    if main_card == 'x20':
+        main_card = bot_move[0]
+    # if card is ok, deck is empty or stakes are high
+    if found_good_card or (found_mid_card and int(main_card[-2:]) <= 10) or not card_deck:
+        return main_card
+    elif (len(table_at_deck) > 4) or (len(player_deck) > 8):
+        return main_card
+    else:
+        return ""
+
+
+
 
 def bot_brain(player_deck):
     global all_addable_cards
-    # bot attack moves !!!
     bot_move = []
-    # check if player is attacking
+    # bot attack moves !!!
     if (attack_player == 2 and player_deck == player2_deck) or (attack_player == 1 and player_deck == player1_deck):
         if len(table_at_deck) == len(table_def_deck):
             for cards in player_deck:
@@ -135,13 +174,16 @@ def bot_brain(player_deck):
                     bot_move.append(cards)
             if not bot_move:
                 player_change_at(player_deck)
+                return
             else:
                 final_move = attack_calc(bot_move)
                 if final_move == "":
                     player_change_at(player_deck)
+                    return
                 else:
                     table_at_deck.append(final_move)
                     player_deck.remove(final_move)
+                    return
     # bot defence moves !!!
     if (attack_player == 1 and player_deck == player2_deck) or (attack_player == 2 and player_deck == player1_deck):
         if len(table_at_deck) > len(table_def_deck):
@@ -152,14 +194,16 @@ def bot_brain(player_deck):
                     bot_move.append(cards)
             if not bot_move:
                 player_change_def(player_deck)
-                print('not working')
+                return
             else:
-                final_move = defence_calc(bot_move)
+                final_move = defence_calc(bot_move,player2_deck)
                 if final_move == "":
                     player_change_def(player_deck)
+                    return
                 else:
-                    table_at_deck.append(final_move)
+                    table_def_deck.append(final_move)
                     player_deck.remove(final_move)
+                    return
 
 # creating decks
 create_deck()
@@ -276,20 +320,28 @@ while running:
     """ OUTPUT """
     # background
     screen.fill((0, 55, 0))
-
+    '''
     # bot cards output
     x_cord = 15
-    #for card in player2_deck:
-        #screen.blit(textures['face_down'], (x_cord, 60))
-        #x_cord += 105
-    for card in player2_deck: # op cards output for testing
+    for index, card in enumerate(player2_deck):
+        index_list = 10
+        for index2 in range(len(animation_list)):
+            if int(animation_list[index2][1]) <= index_list and animation_list[index2][0] == 'pl2':
+                index_list = animation_list[index2][1]
+        if index_list == 10 or index_list > index:
+            screen.blit(textures['face_down'], (x_cord, 60))
+            x_cord += 105
+    '''
+    # op cards output for testing
+    x_cord = 15
+    for card in player2_deck: 
         screen.blit(textures['empty_card'], (x_cord, 60))
         screen.blit(textures[card[-2:]], (x_cord, 60))
         screen.blit(textures[card[0]], (x_cord, 60))
         x_cord += 105
-    x_cord = 15
 
     # player cards output
+    x_cord = 15
     for index, card in enumerate(player1_deck):
         # Y cord calculation
         if card not in card_pos_dict:
@@ -300,10 +352,16 @@ while running:
         elif card_pos_dict[card] <= 595:
             card_pos_dict[card] += 5
         y_cord = card_pos_dict[card]
-        screen.blit(textures['empty_card'], (x_cord, y_cord))
-        screen.blit(textures[card[-2:]], (x_cord, y_cord))
-        screen.blit(textures[card[0]], (x_cord, y_cord))
-        x_cord += 105
+        index_list = 10
+        # card poping up animation
+        for index2 in range(len(animation_list)):
+            if int(animation_list[index2][1]) <= index_list and animation_list[index2][0] == 'pl1':
+                index_list = animation_list[index2][1]
+        if index_list == 10 or index_list > index:
+            screen.blit(textures['empty_card'], (x_cord, y_cord))
+            screen.blit(textures[card[-2:]], (x_cord, y_cord))
+            screen.blit(textures[card[0]], (x_cord, y_cord))
+            x_cord += 105
 
     # attack output
     x_cord = 40
@@ -364,14 +422,14 @@ while running:
     # taking cards from deck animation
     if animation_list != []:
         if anim_bool:
-            animation = animation_list.pop(0)
+            animation = animation_list[0]
             anim_bool = False
             card_pos_dict['anim_x_cord'] = 890
             card_pos_dict['anim_y_cord'] = 320
     if 'anim_x_cord' in card_pos_dict:
         if card_pos_dict['anim_x_cord'] > 350:
             card_pos_dict['anim_x_cord'] -= 50
-            if animation[0] == 'pla':
+            if animation[0] == 'pl1':
                 card_pos_dict['anim_y_cord'] += 25
             else:
                 card_pos_dict['anim_y_cord'] -= 25
@@ -379,6 +437,7 @@ while running:
             y_cord = card_pos_dict['anim_y_cord']
             screen.blit(textures['face_down'], (x_cord, y_cord))
             if not card_pos_dict['anim_x_cord'] > 350:
+                del animation_list[0]
                 anim_bool = True
 
     # if anyone wins
