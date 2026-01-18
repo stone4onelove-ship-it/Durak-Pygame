@@ -134,8 +134,6 @@ def attack_calc(bot_move) -> str:
     else:
         return ""
 
-
-
 def defence_calc(bot_move,player_deck) -> str:
     # choosing the card
     found_good_card = False
@@ -248,6 +246,7 @@ textures['trump_suit'] = pygame.transform.rotate(textures['trump_suit'], 90)
 textures['button'] = pygame.transform.scale(textures['button'], (95, 55))
 
 # all buttons (start x start y length x length y)
+button_T = pygame.Rect(800, 340, 135, 95)
 button_0 = pygame.Rect(890, 470, 95, 55)
 button_1 = pygame.Rect(15, 600, 95, 135)
 button_2 = pygame.Rect(120, 600, 95, 135)
@@ -278,6 +277,7 @@ card_pos_dict = {
     'm_size_y' : 55,
     'm_cord_x' : 880,
     'm_cord_y' : 470,
+    't_cord_x' : 800
 }
 
 # main cycle
@@ -292,6 +292,8 @@ while running:
     mouse_lock = None
     if button_0.collidepoint(mouse_pos):
         mouse_lock = -1
+    elif button_T.collidepoint(mouse_pos):
+        mouse_lock = -2
     for num, button in enumerate(all_buttons):
         if button.collidepoint(mouse_pos):
             mouse_lock = num
@@ -359,7 +361,11 @@ while running:
                 index_list = animation_list[index2][1]
         if index_list == 10 or index_list > index:
             screen.blit(textures['empty_card'], (x_cord, y_cord))
-            screen.blit(textures[card[-2:]], (x_cord, y_cord))
+            if card[0] in ['h','d']:
+                textures[card[-2:]].fill((255, 0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+                screen.blit(textures[card[-2:]], (x_cord, y_cord))
+            else:
+                screen.blit(textures[card[-2:]], (x_cord, y_cord))
             screen.blit(textures[card[0]], (x_cord, y_cord))
             x_cord += 105
 
@@ -390,15 +396,25 @@ while running:
 
     # deck output
     if card_deck != []:
-        screen.blit(textures['trump_empty'], (800, 340))
-        screen.blit(textures['trump_suit'], (800, 340))
-        screen.blit(textures['trump_num'], (800, 340))
+        if mouse_lock == -2:
+            if 770 < card_pos_dict['t_cord_x']:
+                card_pos_dict['t_cord_x'] -= 4
+        elif card_pos_dict['t_cord_x'] < 800:
+            card_pos_dict['t_cord_x'] += 4
+
+        x_cord = card_pos_dict['t_cord_x']
+        y_cord = 340
+        screen.blit(textures['trump_empty'], (x_cord, y_cord))
+        screen.blit(textures['trump_suit'], (x_cord, y_cord))
+        screen.blit(textures['trump_num'], (x_cord, y_cord))
         if len(card_deck) > 1:
             screen.blit(textures['face_down'], (890, 320))
             screen.blit(textures['deck_side'], (875, 320))
-        font = pygame.font.Font(None, 50)
-        text = font.render(str(len(card_deck)), True, (0, 0, 0))
-        screen.blit(text, (1000, 370))
+            font = pygame.font.Font("font/pixel_font.ttf", 40)
+            text = font.render(str(len(card_deck)), True, (0, 0, 0))
+            pygame.draw.rect(screen, (255, 255, 255), (890, 365, 95, 45))
+            screen.blit(text, (900, 370))
+
 
     # button to change player and it's animation
     if mouse_lock == -1:
@@ -444,12 +460,12 @@ while running:
     win_check()
     if player1_won:
         screen.fill((0, 55, 0))
-        font = pygame.font.Font(None, 150)
+        font = pygame.font.Font("font/pixel_font.ttf", 70)
         text = font.render('You won!', True, (0, 0, 0))
         screen.blit(text, (500, 350))
     if player2_won:
         screen.fill((0, 55, 0))
-        font = pygame.font.Font(None, 150)
+        font = pygame.font.Font("font/pixel_font.ttf", 70)
         text = font.render('Opponent won!', True, (0, 0, 0))
         screen.blit(text, (350, 350))
 
