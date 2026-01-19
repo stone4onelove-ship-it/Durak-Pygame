@@ -8,6 +8,7 @@ player2_deck      = []    # bot deck
 table_at_deck     = []    # attack deck
 table_def_deck    = []    # defence deck
 animation_list    = []    # list with cards to animate(fron deck to player)
+anim_to_table     = []    # list with cards to animate(fron player to table)
 all_addable_cards = []    # list of cards to add when attacking (only numbers)
 trump_card        = ''    # trump card
 
@@ -39,15 +40,33 @@ def take_from_deck(player_deck,animation_active = True):
         else:
             player_take = False
 
+def lowest_card(player_deck):
+    lowest_player_card = 'x20'
+    for cards in player_deck:
+        if cards[0] == trump_card[0] and int(cards[-2:]) < int(lowest_player_card[-2:]):
+            lowest_player_card = cards
+    return lowest_player_card[-2:]
+
+def who_moves_first():
+    global attack_player
+    if lowest_card(player1_deck) < lowest_card(player2_deck):
+        attack_player = 1
+    else:
+        attack_player = 2
+
+def end_screen(end_x_cord, final_text):
+    """render final screen"""
+    screen.fill((0, 55, 0))
+    end_font = pygame.font.Font("font/pixel_font.ttf", 70)
+    end_text = end_font.render(final_text, True, (0, 0, 0))
+    screen.blit(end_text, (end_x_cord, 350))
+
 def win_check():
-    """check if player won"""
-    global player1_won, player2_won
-    player1_won = False
-    player2_won = False
+    """check if player won and stop the game"""
     if player1_deck == [] and card_deck == []:
-        player1_won = True
+        end_screen(500,'You Win!')
     if player2_deck == [] and card_deck == []:
-        player2_won = True
+        end_screen(250,'Opponent Wins!')
 
 def op_deck(player_deck):
     """returning the opposite deck"""
@@ -266,11 +285,10 @@ all_buttons = [
 ]
 
 # starting values
-player1_won = False
-player2_won = False
-attack_player = 1
+attack_player = 0
 running = True
 anim_bool = True
+anim2_bool = True
 animation = ''
 card_pos_dict = {
     'm_size_x' : 95,
@@ -280,6 +298,8 @@ card_pos_dict = {
     't_cord_x' : 800
 }
 
+# deciding who moves first
+who_moves_first()
 # main cycle
 while running:
     # bot making a move
@@ -298,7 +318,7 @@ while running:
         if button.collidepoint(mouse_pos):
             mouse_lock = num
             break
-
+    # mouse click input
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -322,7 +342,7 @@ while running:
     """ OUTPUT """
     # background
     screen.fill((0, 55, 0))
-    '''
+
     # bot cards output
     x_cord = 15
     for index, card in enumerate(player2_deck):
@@ -341,7 +361,7 @@ while running:
         screen.blit(textures[card[-2:]], (x_cord, 60))
         screen.blit(textures[card[0]], (x_cord, 60))
         x_cord += 105
-
+    '''
     # player cards output
     x_cord = 15
     for index, card in enumerate(player1_deck):
@@ -361,11 +381,7 @@ while running:
                 index_list = animation_list[index2][1]
         if index_list == 10 or index_list > index:
             screen.blit(textures['empty_card'], (x_cord, y_cord))
-            if card[0] in ['h','d']:
-                textures[card[-2:]].fill((255, 0, 0), special_flags=pygame.BLEND_RGBA_MULT)
-                screen.blit(textures[card[-2:]], (x_cord, y_cord))
-            else:
-                screen.blit(textures[card[-2:]], (x_cord, y_cord))
+            screen.blit(textures[card[-2:]], (x_cord, y_cord))
             screen.blit(textures[card[0]], (x_cord, y_cord))
             x_cord += 105
 
@@ -396,17 +412,18 @@ while running:
 
     # deck output
     if card_deck != []:
+        # trump card animation
         if mouse_lock == -2:
             if 770 < card_pos_dict['t_cord_x']:
                 card_pos_dict['t_cord_x'] -= 4
         elif card_pos_dict['t_cord_x'] < 800:
             card_pos_dict['t_cord_x'] += 4
-
         x_cord = card_pos_dict['t_cord_x']
         y_cord = 340
         screen.blit(textures['trump_empty'], (x_cord, y_cord))
         screen.blit(textures['trump_suit'], (x_cord, y_cord))
         screen.blit(textures['trump_num'], (x_cord, y_cord))
+        # deck output
         if len(card_deck) > 1:
             screen.blit(textures['face_down'], (890, 320))
             screen.blit(textures['deck_side'], (875, 320))
@@ -436,7 +453,7 @@ while running:
     screen.blit(textures['button'], (x_cord, y_cord))
 
     # taking cards from deck animation
-    if animation_list != []:
+    if animation_list:
         if anim_bool:
             animation = animation_list[0]
             anim_bool = False
@@ -456,19 +473,15 @@ while running:
                 del animation_list[0]
                 anim_bool = True
 
+    # putting card on the table animation
+    if anim_to_table:
+        if anim2_bool:
+            animation = anim_to_table[0]
+            anim2_bool = False
+
+
     # if anyone wins
     win_check()
-    if player1_won:
-        screen.fill((0, 55, 0))
-        font = pygame.font.Font("font/pixel_font.ttf", 70)
-        text = font.render('You won!', True, (0, 0, 0))
-        screen.blit(text, (500, 350))
-    if player2_won:
-        screen.fill((0, 55, 0))
-        font = pygame.font.Font("font/pixel_font.ttf", 70)
-        text = font.render('Opponent won!', True, (0, 0, 0))
-        screen.blit(text, (350, 350))
-
     # end of the tick
     pygame.display.flip()
     clock.tick(60)
