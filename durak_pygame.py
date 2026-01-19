@@ -13,6 +13,7 @@ all_addable_cards = []    # list of cards to add when attacking (only numbers)
 trump_card        = ''    # trump card
 able_to_grab      = False
 want_to_grab      = 0
+cards_been_beaten = False
 
 """Game Functions"""
 
@@ -43,6 +44,7 @@ def take_from_deck(player_deck,animation_active = True):
             player_take = False
 
 def lowest_card(player_deck):
+    """finds the lowest trump card in a deck"""
     lowest_player_card = 'x20'
     for cards in player_deck:
         if cards[0] == trump_card[0] and int(cards[-2:]) < int(lowest_player_card[-2:]):
@@ -50,25 +52,36 @@ def lowest_card(player_deck):
     return lowest_player_card[-2:]
 
 def who_moves_first():
+    """decides who moves first"""
     global attack_player
     if lowest_card(player1_deck) < lowest_card(player2_deck):
         attack_player = 1
     else:
         attack_player = 2
 
-def end_screen(end_x_cord, final_text):
-    """render final screen"""
-    screen.fill((0, 55, 0))
-    end_font = pygame.font.Font("font/pixel_font.ttf", 70)
-    end_text = end_font.render(final_text, True, (0, 0, 0))
-    screen.blit(end_text, (end_x_cord, 350))
-
 def win_check():
     """check if player won and stop the game"""
+    def end_screen(end_x_cord, final_text):
+        """render final screen"""
+        screen.fill((0, 55, 0))
+        end_font = pygame.font.Font("font/pixel_font.ttf", 70)
+        end_text = end_font.render(final_text, True, (0, 0, 0))
+        screen.blit(end_text, (end_x_cord, 350))
     if player1_deck == [] and card_deck == []:
         end_screen(500,'You Win!')
     if player2_deck == [] and card_deck == []:
         end_screen(250,'Opponent Wins!')
+
+def first_beat() -> bool:
+    """checks if the first cards were beaten"""
+    if cards_been_beaten:
+        length = 6
+    else:
+        length = 5
+    if len(table_at_deck) >= length:
+        return False
+    else:
+        return True
 
 def op_deck(player_deck):
     """returning the opposite deck"""
@@ -79,7 +92,7 @@ def op_deck(player_deck):
 
 def player_change_at(player_deck):
     """if opponent defended himself, switching the player"""
-    global table_at_deck,table_def_deck,attack_player
+    global table_at_deck,table_def_deck,attack_player, cards_been_beaten
     # taking cards
     take_from_deck(player_deck)
     take_from_deck(op_deck(player_deck))
@@ -87,6 +100,7 @@ def player_change_at(player_deck):
     table_at_deck = []
     table_def_deck = []
     # changing the player
+    cards_been_beaten = True
     if player_deck == player1_deck:
         attack_player = 2
     else:
@@ -111,8 +125,8 @@ def player_change_def(player_deck):
         table_at_deck = []
         table_def_deck = []
         able_to_grab = False
+        print('want to grab turns off')
         want_to_grab = 0
-
 
 def attack_button(number,player_deck):
     """Checking if attack card works"""
@@ -143,7 +157,10 @@ def all_addable_cards_calc():
 """Bot Brain Functions"""
 
 def attack_calc(bot_move) -> str:
+    """chooses the best attack card to play"""
     # choosing the card
+    if not bot_move:
+        return ""
     found_good_card = False
     main_card = 'x20'
     for cards in bot_move:
@@ -163,7 +180,10 @@ def attack_calc(bot_move) -> str:
         return ""
 
 def defence_calc(bot_move,player_deck) -> str:
+    """chooses the best defence card to play"""
     # choosing the card
+    if not bot_move:
+        return ""
     found_good_card = False
     found_mid_card = False
     main_card = 'x20'
@@ -186,10 +206,8 @@ def defence_calc(bot_move,player_deck) -> str:
     else:
         return ""
 
-
-
-
 def bot_brain(player_deck):
+    """makes a bot move"""
     global all_addable_cards,able_to_grab
     bot_move = []
     if player_deck == player1_deck:
@@ -198,39 +216,27 @@ def bot_brain(player_deck):
     else:
         number = 2
         op_num = 1
-    # bot attack moves !!!
-    print(want_to_grab == op_num)
+    # bot attack moves
     if (attack_player == 2 and player_deck == player2_deck) or (attack_player == 1 and player_deck == player1_deck):
         if len(table_at_deck) == len(table_def_deck) or (want_to_grab == op_num):
             for cards in player_deck:
                 if not table_at_deck or cards[-2:] in all_addable_cards:
                     bot_move.append(cards)
-            if not bot_move:
+            final_move = attack_calc(bot_move)
+            if final_move == "":
                 if want_to_grab == op_num:
                     able_to_grab = True
-                    #time.sleep(2)
+                    # time.sleep(2)
                     player_change_def(op_deck(player_deck))
                 else:
                     player_change_at(player_deck)
                 return
-            else:
-                final_move = attack_calc(bot_move)
-                if final_move == "":
-                    if want_to_grab == op_num:
-                        able_to_grab = True
-                        #time.sleep(2)
-                        player_change_def(op_deck(player_deck))
-                    else:
-                        player_change_at(player_deck)
-                    return
-                else:
-                    table_at_deck.append(final_move)
-                    player_deck.remove(final_move)
-                    return
-
-
-
-    # bot defence moves !!!
+            if first_beat():
+                table_at_deck.append(final_move)
+                player_deck.remove(final_move)
+            return
+        return
+    # bot defence moves
     if (attack_player == 1 and player_deck == player2_deck) or (attack_player == 2 and player_deck == player1_deck):
         if len(table_at_deck) > len(table_def_deck):
             for cards in player_deck:
@@ -238,18 +244,15 @@ def bot_brain(player_deck):
                     bot_move.append(cards)
                 if cards[0] == trump_card[0] and table_at_deck[-1][0] != trump_card[0]:
                     bot_move.append(cards)
-            if not bot_move or want_to_grab == number:
+            final_move = defence_calc(bot_move, player2_deck)
+            if final_move == "" or (want_to_grab == number and able_to_grab):
                 player_change_def(player_deck)
                 return
-            else:
-                final_move = defence_calc(bot_move,player2_deck)
-                if final_move == "":
-                    player_change_def(player_deck)
-                    return
-                else:
-                    table_def_deck.append(final_move)
-                    player_deck.remove(final_move)
-                    return
+            elif want_to_grab != number:
+                table_def_deck.append(final_move)
+                player_deck.remove(final_move)
+                return
+        return
 
 # creating decks
 create_deck()
@@ -324,7 +327,8 @@ card_pos_dict = {
     'm_size_y' : 55,
     'm_cord_x' : 880,
     'm_cord_y' : 470,
-    't_cord_x' : 800
+    't_cord_x' : 800,
+    'p_y_cord' : 0
 }
 
 # deciding who moves first
@@ -347,6 +351,7 @@ while running:
         if button.collidepoint(mouse_pos):
             mouse_lock = num
             break
+
     # mouse click input
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -359,7 +364,7 @@ while running:
                 able_to_grab = True
                 player_change_def(player2_deck)
             for num, button in enumerate(all_buttons):
-                if button.collidepoint(event.pos) and len(player1_deck) >= num + 1:
+                if button.collidepoint(event.pos) and len(player1_deck) >= num + 1 and first_beat():
                     attack_button(num,player1_deck)
                     break
         # defence input
@@ -419,34 +424,39 @@ while running:
             x_cord += 105
 
     # table output
-    p_y_cord = 0
+    # grabbing animation
     if want_to_grab == 1:
-        p_y_cord += 100
+        if card_pos_dict['p_y_cord'] < 100:
+            card_pos_dict['p_y_cord'] += 4
     elif want_to_grab == 2:
-        p_y_cord -= 100
+        if card_pos_dict['p_y_cord'] > -100:
+            card_pos_dict['p_y_cord'] -= 4
+    else:
+        card_pos_dict['p_y_cord'] = 0
     # attack cards
+    y_add = card_pos_dict['p_y_cord']
     x_cord = 40
-    y_cord = 340 + p_y_cord
+    y_cord = 340 + y_add
     for card in table_at_deck:
         screen.blit(textures['empty_card'], (x_cord, y_cord))
         screen.blit(textures[card[-2:]], (x_cord, y_cord))
         screen.blit(textures[card[0]], (x_cord, y_cord))
         x_cord += 125
-        if y_cord == 340:
-            y_cord = 310
-        else: y_cord = 340
+        if y_cord == 340 + y_add:
+            y_cord = 310 + y_add
+        else: y_cord = 340 + y_add
     # defence cards
     x_cord = 60
-    y_cord = 360 + p_y_cord
+    y_cord = 360 + y_add
     for card in table_def_deck:
         screen.blit(textures['empty_card'], (x_cord, y_cord))
         screen.blit(textures[card[-2:]], (x_cord, y_cord))
         screen.blit(textures[card[0]], (x_cord, y_cord))
         x_cord += 125
-        if y_cord == 360:
-            y_cord = 330
+        if y_cord == 360 + y_add:
+            y_cord = 330 + y_add
         else:
-            y_cord = 360
+            y_cord = 360 + y_add
 
     # deck output
     if card_deck != []:
@@ -517,7 +527,6 @@ while running:
         if anim2_bool:
             animation = anim_to_table[0]
             anim2_bool = False
-
 
     # if anyone wins
     win_check()
