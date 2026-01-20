@@ -11,8 +11,8 @@ animation_list    = []    # list with cards to animate(fron deck to player)
 anim_to_table     = []    # list with cards to animate(fron player to table)
 all_addable_cards = []    # list of cards to add when attacking (only numbers)
 trump_card        = ''    # trump card
-able_to_grab      = False
 want_to_grab      = 0
+able_to_grab      = False
 cards_been_beaten = False
 
 """Game Functions"""
@@ -75,13 +75,13 @@ def win_check():
 def first_beat() -> bool:
     """checks if the first cards were beaten"""
     if cards_been_beaten:
-        length = 6
-    else:
         length = 5
-    if len(table_at_deck) >= length:
-        return False
     else:
+        length = 4
+    if length >= len(table_at_deck) :
         return True
+    else:
+        return False
 
 def op_deck(player_deck):
     """returning the opposite deck"""
@@ -223,6 +223,7 @@ def bot_brain(player_deck):
                 if not table_at_deck or cards[-2:] in all_addable_cards:
                     bot_move.append(cards)
             final_move = attack_calc(bot_move)
+            print(first_beat(),len(table_at_deck))
             if final_move == "":
                 if want_to_grab == op_num:
                     able_to_grab = True
@@ -231,9 +232,11 @@ def bot_brain(player_deck):
                 else:
                     player_change_at(player_deck)
                 return
-            if first_beat():
-                table_at_deck.append(final_move)
-                player_deck.remove(final_move)
+            elif not first_beat():
+                player_change_at(player_deck)
+                return
+            table_at_deck.append(final_move)
+            player_deck.remove(final_move)
             return
         return
     # bot defence moves
@@ -262,6 +265,7 @@ take_from_deck(player2_deck,False)
 # pygame initialization
 pygame.init()
 screen = pygame.display.set_mode((1500, 800))
+screen = pygame.display.set_mode((1500, 800), pygame.FULLSCREEN | pygame.SCALED)
 clock = pygame.time.Clock()
 
 # textures
@@ -279,6 +283,7 @@ textures = {
     'd'           : pygame.image.load("textures/d.png").convert_alpha(),
     's'           : pygame.image.load("textures/s.png").convert_alpha(),
     'c'           : pygame.image.load("textures/c.png").convert_alpha(),
+    'table'       : pygame.image.load("textures/table.png").convert_alpha(),
     'button'      : pygame.image.load("textures/button.png").convert_alpha(),
     'empty_card'  : pygame.image.load("textures/empty_card.png").convert_alpha(),
     'face_down'   : pygame.image.load("textures/face_down.png").convert_alpha(),
@@ -289,12 +294,13 @@ textures = {
 }
 # resizing
 for texture in textures.keys():
-    if texture != 'button':
+    if texture not in ['button','table']:
         textures[texture] = pygame.transform.scale(textures[texture], (95, 135))
 textures['trump_empty'] = pygame.transform.rotate(textures['trump_empty'], 90)
 textures['trump_num'] = pygame.transform.rotate(textures['trump_num'], 90)
 textures['trump_suit'] = pygame.transform.rotate(textures['trump_suit'], 90)
 textures['button'] = pygame.transform.scale(textures['button'], (95, 55))
+textures['table'] = pygame.transform.scale(textures['table'], (1050, 325))
 
 # all buttons (start x start y length x length y)
 button_T = pygame.Rect(800, 340, 135, 95)
@@ -356,6 +362,8 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+            running = False
         # attack input
         if event.type == pygame.MOUSEBUTTONDOWN and attack_player == 1:
             if button_0.collidepoint(event.pos) and len(table_at_deck) == len(table_def_deck) >= 1:
@@ -380,6 +388,8 @@ while running:
     """ OUTPUT """
     # background
     screen.fill((0, 55, 0))
+    screen.blit(textures['table'], (5, 235))
+
     '''
     # bot cards output
     x_cord = 15
