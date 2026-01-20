@@ -14,6 +14,7 @@ trump_card        = ''    # trump card
 want_to_grab      = 0
 able_to_grab      = False
 cards_been_beaten = False
+win_happened      = False
 
 """Game Functions"""
 
@@ -59,18 +60,41 @@ def who_moves_first():
     else:
         attack_player = 2
 
+def timer(player_deck):
+    """timer for player, stops the game if needed"""
+    global card_deck, player1_deck, player2_deck
+    if not hasattr(timer, 'time'):
+        timer.time = 2100
+        timer.old_at = table_at_deck
+        timer.old_def = table_def_deck
+    timer.time -= 1
+    if timer.old_at != table_at_deck or timer.old_def != table_def_deck or win_happened:
+        timer.time = 2100
+    timer.old_at  = table_at_deck.copy()
+    timer.old_def = table_def_deck.copy()
+    if timer.time <= 0:
+        card_deck = []
+        if player_deck == player1_deck:
+            player2_deck = []
+        else:
+            player1_deck = []
+    return timer.time
+
 def win_check():
     """check if player won and stop the game"""
     def end_screen(end_x_cord, final_text):
         """render final screen"""
+        global win_happened
         screen.fill((0, 55, 0))
         end_font = pygame.font.Font("font/pixel_font.ttf", 70)
         end_text = end_font.render(final_text, True, (0, 0, 0))
         screen.blit(end_text, (end_x_cord, 350))
     if player1_deck == [] and card_deck == []:
         end_screen(500,'You Win!')
+        win_happened = True
     if player2_deck == [] and card_deck == []:
         end_screen(250,'Opponent Wins!')
+        win_happened = True
 
 def first_beat() -> bool:
     """checks if the first cards were beaten"""
@@ -217,7 +241,7 @@ def bot_brain(player_deck):
         number = 2
         op_num = 1
     # bot attack moves
-    if (attack_player == 2 and player_deck == player2_deck) or (attack_player == 1 and player_deck == player1_deck):
+    if (attack_player == 1 and player_deck == player1_deck) or (attack_player == 2 and player_deck == player2_deck):
         if len(table_at_deck) == len(table_def_deck) or (want_to_grab == op_num):
             for cards in player_deck:
                 if not table_at_deck or cards[-2:] in all_addable_cards:
@@ -291,16 +315,18 @@ textures = {
     'trump_empty' : pygame.image.load("textures/empty_card.png").convert_alpha(),
     'trump_num'   : pygame.image.load(f"textures/{trump_card[-2:]}.png").convert_alpha(),
     'trump_suit'  : pygame.image.load(f"textures/{trump_card[0]}.png").convert_alpha(),
+    'loading'     : pygame.image.load("textures/loading.png").convert_alpha(),
 }
 # resizing
 for texture in textures.keys():
-    if texture not in ['button','table']:
+    if texture not in ['button','table','loading']:
         textures[texture] = pygame.transform.scale(textures[texture], (95, 135))
 textures['trump_empty'] = pygame.transform.rotate(textures['trump_empty'], 90)
 textures['trump_num'] = pygame.transform.rotate(textures['trump_num'], 90)
 textures['trump_suit'] = pygame.transform.rotate(textures['trump_suit'], 90)
 textures['button'] = pygame.transform.scale(textures['button'], (95, 55))
 textures['table'] = pygame.transform.scale(textures['table'], (1050, 325))
+textures['loading'] = pygame.transform.scale(textures['loading'], (300, 75))
 
 # all buttons (start x start y length x length y)
 button_T = pygame.Rect(800, 340, 135, 95)
@@ -341,6 +367,10 @@ card_pos_dict = {
 who_moves_first()
 # main cycle
 while running:
+    # timer
+    timer(player1_deck)
+
+
     # bot making a move
     all_addable_cards_calc()
     bot_brain(player2_deck)
@@ -362,8 +392,10 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+            pygame.quit()
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
             running = False
+            pygame.quit()
         # attack input
         if event.type == pygame.MOUSEBUTTONDOWN and attack_player == 1:
             if button_0.collidepoint(event.pos) and len(table_at_deck) == len(table_def_deck) >= 1:
@@ -387,7 +419,8 @@ while running:
 
     """ OUTPUT """
     # background
-    screen.fill((0, 55, 0))
+    background_color = (0, 55, 0)
+    screen.fill(background_color)
     screen.blit(textures['table'], (5, 235))
 
     '''
@@ -467,6 +500,17 @@ while running:
             y_cord = 330 + y_add
         else:
             y_cord = 360 + y_add
+
+    #timer output
+    x_length = timer(player1_deck) / 6
+    if x_length < 100:
+        red_color = 200
+    else:
+        red_color = 100
+    pygame.draw.rect(screen, (0, 0, 0), (1100, 360, 300, 55))
+    pygame.draw.rect(screen, (red_color, 0, 0), (1100, 360, x_length, 55))
+    pygame.draw.rect(screen, background_color, (1400, 360, 55, 55))
+    screen.blit(textures['loading'], (1100, 350))
 
     # deck output
     if card_deck != []:
