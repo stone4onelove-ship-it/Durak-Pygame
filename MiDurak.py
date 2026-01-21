@@ -7,16 +7,23 @@ player1_deck      = []    # player deck
 player2_deck      = []    # bot deck
 table_at_deck     = []    # attack deck
 table_def_deck    = []    # defence deck
+trump_card        = ''    # trump card
+
 animation_list    = []    # list with cards to animate(fron deck to player)
-anim_at_table     = []    # list with cards to animate(fron player to table)
-anim_def_table    = []
+
+anim_at_table     = []    # list with cards to animate(fron player to attack table)
+anim_def_table    = []    # list with cards to animate(fron player to defence table)
+want_to_grab      = 0     # if any player is grabbing cards from the table
+able_to_grab      = False # player permission to grab card from the table
+
 anim_at_player    = []
 anim_def_player   = []
-take_f_deck_queue = []
+
+take_f_deck_queue = []    # stores data about taking cards from the deck
+able_to_take      = True
+
 all_addable_cards = []    # list of cards to add when attacking (only numbers)
-trump_card        = ''    # trump card
-want_to_grab      = 0
-able_to_grab      = False
+
 cards_been_beaten = False
 win_happened      = False
 
@@ -34,20 +41,27 @@ def create_deck():
     random.shuffle(card_deck)
     trump_card = card_deck[0]
 
-def take_from_deck(player_deck,animation_active = True):
+def take_from_deck(animation_active = True):
     """fill player deck with cards"""
-    player_take = True  # has 6 cards
-    while player_take:
-        if card_deck != [] and len(player_deck) < 6:
-            if animation_active:
-                card_info = len(player_deck)
-                if player_deck == player1_deck:
-                    animation_list.append(('pl1',card_info))
+    if take_f_deck_queue:
+        for take in take_f_deck_queue:
+            if take == 1:
+                player_deck = player1_deck
+            else:
+                player_deck = player2_deck
+            player_take = True  # has 6 cards
+            while player_take:
+                if card_deck != [] and len(player_deck) < 6:
+                    if animation_active:
+                        card_info = len(player_deck)
+                        if player_deck == player1_deck:
+                            animation_list.append(('pl1',card_info))
+                        else:
+                            animation_list.append(('pl2',card_info))
+                    player_deck.append(card_deck.pop()) #pop(-1)
                 else:
-                    animation_list.append(('pl2',card_info))
-            player_deck.append(card_deck.pop()) #pop(-1)
-        else:
-            player_take = False
+                    player_take = False
+            del take_f_deck_queue[0]
 
 def lowest_card(player_deck):
     """finds the lowest trump card in a deck"""
@@ -100,7 +114,7 @@ def win_check():
         end_font = pygame.font.Font("font/pixel_font.ttf", 70)
         end_text = end_font.render(final_text, True, (0, 0, 0))
         screen.blit(end_text, (end_x_cord, 350))
-    if not card_deck and not anim_def_table:
+    if not card_deck and not anim_def_table and not take_f_deck_queue:
         if not player1_deck:
             end_screen(500,'You Win!')
             win_happened = True
@@ -129,17 +143,17 @@ def op_deck(player_deck):
 def player_change_at(player_deck):
     """if opponent defended himself, switching the player"""
     global table_at_deck,table_def_deck,attack_player, cards_been_beaten
-    # taking cards
-    take_from_deck(player_deck)
-    take_from_deck(op_deck(player_deck))
     # cleaning the table
     table_at_deck = []
     table_def_deck = []
     # changing the player
     cards_been_beaten = True
+    # allowing card taking and changing the player
     if player_deck == player1_deck:
+        take_f_deck_queue.append(1)
         attack_player = 2
     else:
+        take_f_deck_queue.append(2)
         attack_player = 1
 
 def player_change_def(player_deck):
@@ -157,8 +171,8 @@ def player_change_def(player_deck):
         for card_def in table_def_deck:
             player_deck.append(card_def)
             anim_def_player.append((card_def, table_def_deck.index(card_def), player_deck.index(card_def), want_to_grab))
-        # taking cards
-        take_from_deck(op_deck(player_deck))
+        # allowing taking cards
+        take_f_deck_queue.append(2)
         # cleaning the table
         table_at_deck = []
         table_def_deck = []
@@ -308,8 +322,8 @@ def bot_brain(player_deck):
 
 # creating decks
 create_deck()
-take_from_deck(player1_deck,False)
-take_from_deck(player2_deck,False)
+take_f_deck_queue.append(1)
+take_f_deck_queue.append(2)
 
 # pygame initialization
 pygame.init()
@@ -397,7 +411,8 @@ who_moves_first()
 while running:
     # timer
     timer(player1_deck)
-
+    # take from the deck
+    take_from_deck()
 
     # bot making a move
     all_addable_cards_calc()
