@@ -9,7 +9,9 @@ table_at_deck     = []    # attack deck
 table_def_deck    = []    # defence deck
 trump_card        = ''    # trump card
 
+# taking cards from deck animation
 animation_list    = []    # list with cards to animate(fron deck to player)
+anim_bool = True
 
 anim_at_table     = []    # list with cards to animate(fron player to attack table)
 anim_def_table    = []    # list with cards to animate(fron player to defence table)
@@ -37,23 +39,28 @@ grab_it = 0
 animated_at_cards = []
 animated_def_cards = []
 
+# menu
+pause_mode = False
+menu_mode  = True
+
 
 # starting values
 attack_player = 0
 running = True
-anim_bool = True
 anim2_bool = True
 anim3_bool = True
 anim4_bool = True
 anim5_bool = True
-animation = ''
 card_pos_dict = {
     'm_size_x' : 95,
     'm_size_y' : 55,
     'm_cord_x' : 880,
     'm_cord_y' : 470,
     't_cord_x' : 800,
-    'p_y_cord' : 0
+    'p_y_cord' : 0,
+    'menu_up'  : 0,
+    'menu_down': 0,
+
 }
 
 """Game Functions"""
@@ -75,7 +82,7 @@ def take_from_deck(animation_active = True):
     anim_throw_activ = False
     if anim_at_throw or anim_def_throw:
         anim_throw_activ = True
-    if take_f_deck_queue and not anim_at_player and not anim_throw_activ:
+    if take_f_deck_queue and not anim_at_player and not anim_throw_activ and not menu_mode:
         table_at_deck = []
         table_def_deck = []
         animated_at_cards = []
@@ -121,8 +128,9 @@ def timer(player_deck):
         timer.time = 2100
         timer.old_at = table_at_deck
         timer.old_def = table_def_deck
-    timer.time -= 1
-    if timer.old_at != table_at_deck or timer.old_def != table_def_deck or win_happened:
+    if not pause_mode:
+        timer.time -= 1
+    if timer.old_at != table_at_deck or timer.old_def != table_def_deck or win_happened or menu_mode:
         timer.time = 2100
     timer.old_at  = table_at_deck.copy()
     timer.old_def = table_def_deck.copy()
@@ -136,7 +144,7 @@ def timer(player_deck):
 
 def free_to_move() -> bool:
     if (not anim_def_table and not anim_at_table and not animation_list and not take_f_deck_queue
-    and not anim_at_player and not anim_at_player and not anim_def_player):
+    and not anim_at_player and not anim_at_player and not anim_def_player and not pause_mode and not menu_mode):
         return True
     else:
         return False
@@ -145,18 +153,25 @@ def win_check():
     """check if player won and stop the game"""
     def end_screen(end_x_cord, final_text):
         """render final screen"""
-        global win_happened
         screen.fill((0, 55, 0))
         end_font = pygame.font.Font("font/pixel_font.ttf", 70)
         end_text = end_font.render(final_text, True, (0, 0, 0))
         screen.blit(end_text, (end_x_cord, 350))
-    if not card_deck and not anim_def_table and not take_f_deck_queue:
+    global menu_mode, win_happened
+    if not card_deck and not anim_def_table and not take_f_deck_queue and not pause_mode and not menu_mode:
         if not player1_deck:
             end_screen(500,'You Win!')
             win_happened = True
         if not player2_deck:
             end_screen(250,'Opponent Wins!')
             win_happened = True
+    if win_happened:
+        if not hasattr(win_check, 'time'):
+            win_check.time = 700
+        win_check.time -= 1
+        if win_check.time <= 0:
+            win_happened = False
+            menu_mode = True
 
 def first_beat() -> bool:
     """checks if the first cards were beaten"""
@@ -361,6 +376,9 @@ def bot_brain(player_deck):
                 return
     return
 
+def game_reset():
+    pass
+
 # creating decks
 create_deck()
 take_f_deck_queue.append(1)
@@ -396,10 +414,13 @@ textures = {
     'trump_num'   : pygame.image.load(f"textures/{trump_card[-2:]}.png").convert_alpha(),
     'trump_suit'  : pygame.image.load(f"textures/{trump_card[0]}.png").convert_alpha(),
     'loading'     : pygame.image.load("textures/loading.png").convert_alpha(),
+    'menu'        : pygame.image.load("textures/menu.png").convert_alpha(),
+    'menu_button' : pygame.image.load("textures/menu_button.png").convert_alpha(),
+    'pause'       : pygame.image.load("textures/pause.png").convert_alpha(),
 }
 # resizing
 for texture in textures.keys():
-    if texture not in ['button','table','loading']:
+    if texture not in ['button','table','loading','menu','menu_button']:
         textures[texture] = pygame.transform.scale(textures[texture], (95, 135))
 textures['trump_empty'] = pygame.transform.rotate(textures['trump_empty'], 90)
 textures['trump_num'] = pygame.transform.rotate(textures['trump_num'], 90)
@@ -407,8 +428,14 @@ textures['trump_suit'] = pygame.transform.rotate(textures['trump_suit'], 90)
 textures['button'] = pygame.transform.scale(textures['button'], (95, 55))
 textures['table'] = pygame.transform.scale(textures['table'], (1050, 325))
 textures['loading'] = pygame.transform.scale(textures['loading'], (300, 75))
+textures['menu'] = pygame.transform.scale(textures['menu'], (640, 450))
+textures['pause'] = pygame.transform.scale(textures['pause'], (80, 80))
+
 
 # all buttons (start x start y length x length y)
+button_P = pygame.Rect(1400, 15, 80, 80)
+button_U = pygame.Rect(525, 320, 420, 100)
+button_D = pygame.Rect(525, 445, 420, 100)
 button_T = pygame.Rect(800, 340, 135, 95)
 button_0 = pygame.Rect(890, 470, 95, 55)
 button_1 = pygame.Rect(15, 600, 95, 135)
@@ -447,6 +474,10 @@ while running:
     mouse_lock = None
     if button_0.collidepoint(mouse_pos):
         mouse_lock = -1
+    elif button_U.collidepoint(mouse_pos):
+        mouse_lock = -3
+    elif button_D.collidepoint(mouse_pos):
+        mouse_lock = -4
     elif button_T.collidepoint(mouse_pos):
         mouse_lock = -2
     for num, button in enumerate(all_buttons):
@@ -461,6 +492,22 @@ while running:
             running = False
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
             running = False
+        # menu input
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if button_P.collidepoint(mouse_pos) and not menu_mode:
+                pause_mode = True
+            if menu_mode:
+                if button_U.collidepoint(mouse_pos):
+                    menu_mode = False
+                    game_reset()
+                elif button_D.collidepoint(mouse_pos):
+                    running = False
+            elif pause_mode:
+                if button_U.collidepoint(mouse_pos):
+                    pause_mode = False
+                elif button_D.collidepoint(mouse_pos):
+                    pause_mode = False
+                    menu_mode = True
         # attack input
         if event.type == pygame.MOUSEBUTTONDOWN and attack_player == 1 and free_to_move():
             if button_0.collidepoint(event.pos) and len(table_at_deck) == len(table_def_deck) >= 1:
@@ -488,25 +535,29 @@ while running:
     screen.fill(background_color)
     screen.blit(textures['table'], (5, 235))
 
-    '''
+
     # bot cards output
-    x_cord = 15
     for index, card in enumerate(player2_deck):
+        x_cord = 15 + 105 * index
+        card_pop = True
         index_list = 10
         for index2 in range(len(animation_list)):
             if int(animation_list[index2][1]) <= index_list and animation_list[index2][0] == 'pl2':
                 index_list = animation_list[index2][1]
-        if index_list == 10 or index_list > index:
+        if not (index_list == 10 or index_list > index):
+            card_pop = False
+        if card in table_at_deck or card in table_def_deck:
+            card_pop = False
+        if card in animated_def_cards or card in animated_at_cards:
+            card_pop = True
+        if card_pop:
             screen.blit(textures['face_down'], (x_cord, 60))
-            x_cord += 105
-    '''
-    # op cards output for testing
-    x_cord = 15
-    for card in player2_deck: 
-        screen.blit(textures['empty_card'], (x_cord, 60))
-        screen.blit(textures[card[-2:]], (x_cord, 60))
-        screen.blit(textures[card[0]], (x_cord, 60))
-        x_cord += 105
+            # to see bot cards
+            '''
+            screen.blit(textures['empty_card'], (x_cord, 60))
+            screen.blit(textures[card[-2:]], (x_cord, 60))
+            screen.blit(textures[card[0]], (x_cord, 60))
+            '''
 
     # player cards output
     for index, card in enumerate(player1_deck):
@@ -788,25 +839,71 @@ while running:
     screen.blit(textures['button'], (x_cord, y_cord))
 
     # taking cards from deck animation
+    x_cord = 890
+    y_cord = 320
     if animation_list:
         if anim_bool:
             animation = animation_list[0]
-            anim_bool = False
-            card_pos_dict['anim_x_cord'] = 890
-            card_pos_dict['anim_y_cord'] = 320
-    if 'anim_x_cord' in card_pos_dict:
-        if card_pos_dict['anim_x_cord'] > 350:
-            card_pos_dict['anim_x_cord'] -= 50
+            deck_start_x = 890
+            deck_start_y = 320
+            deck_final_x = 15 + 105 * animation[1] - 1
             if animation[0] == 'pl1':
-                card_pos_dict['anim_y_cord'] += 25
+                deck_final_y = 600
             else:
-                card_pos_dict['anim_y_cord'] -= 25
-            x_cord = card_pos_dict['anim_x_cord']
-            y_cord = card_pos_dict['anim_y_cord']
-            screen.blit(textures['face_down'], (x_cord, y_cord))
-            if not card_pos_dict['anim_x_cord'] > 350:
-                del animation_list[0]
-                anim_bool = True
+                deck_final_y = 60
+
+            deck_diff_x = (deck_final_x - deck_start_x) / 10
+            deck_diff_y = (deck_final_y - deck_start_y) / 10
+            deck_active_x = deck_start_x
+            deck_active_y = deck_start_y
+            anim_bool = False
+        if (deck_start_x <= deck_active_x <= deck_final_x - deck_diff_x or
+                deck_start_x >= deck_active_x >= deck_final_x - deck_diff_x):
+            deck_active_x += deck_diff_x
+            deck_active_y += deck_diff_y
+            screen.blit(textures['face_down'], (deck_active_x, deck_active_y))
+        else:
+            anim_bool = True
+            del animation_list[0]
+
+    # menu
+    screen.blit(textures['pause'], (1400, 15))
+    if pause_mode or menu_mode:
+        background_color = (0, 55, 0)
+        screen.fill(background_color)
+        screen.blit(textures['menu'], (415, 150))
+        for num, menu_button in [(-3, 'menu_up'), (-4, 'menu_down')]:
+            if mouse_lock == num:
+                if card_pos_dict[menu_button] < 10:
+                    card_pos_dict[menu_button] += 2
+            elif card_pos_dict[menu_button] > 0:
+                card_pos_dict[menu_button] -= 1
+
+        # upper button
+        x_size = 420 + card_pos_dict['menu_up'] * 2
+        y_size = 100 + card_pos_dict['menu_up'] * 2
+        menu_up_dev_2 = int(card_pos_dict['menu_up'] / 2)
+        textures['menu_button'] = pygame.transform.scale(textures['menu_button'], (x_size, y_size))
+        screen.blit(textures['menu_button'], (525 - card_pos_dict['menu_up'] , 320 - card_pos_dict['menu_up']))
+        font = pygame.font.Font("font/pixel_font.ttf", 40 + menu_up_dev_2)
+        if menu_mode:
+            text = font.render("  play  ", True, (0, 0, 0))
+        else:
+            text = font.render("continue", True, (0, 0, 0))
+        screen.blit(text, (570 - card_pos_dict['menu_up'], 350 - menu_up_dev_2))
+        # lower button
+        x_size = 420 + card_pos_dict['menu_down'] * 2
+        y_size = 100 + card_pos_dict['menu_down'] * 2
+        menu_down_dev_2 = int(card_pos_dict['menu_down'] / 2)
+        textures['menu_button'] = pygame.transform.scale(textures['menu_button'], (x_size, y_size))
+        screen.blit(textures['menu_button'], (525 - card_pos_dict['menu_down'] , 445 - card_pos_dict['menu_down']))
+        font = pygame.font.Font("font/pixel_font.ttf", 40 + menu_down_dev_2)
+        if menu_mode:
+            text = font.render("  exit  ", True, (0, 0, 0))
+        else:
+            text = font.render("  menu  ", True, (0, 0, 0))
+        screen.blit(text, (570 - card_pos_dict['menu_down'], 475 - menu_down_dev_2))
+
     # if anyone wins
     win_check()
     # end of the tick
