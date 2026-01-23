@@ -8,49 +8,43 @@ player2_deck      = []    # bot deck
 table_at_deck     = []    # attack deck
 table_def_deck    = []    # defence deck
 trump_card        = ''    # trump card
-
 # taking cards from deck animation
 animation_list    = []    # list with cards to animate(fron deck to player)
-anim_bool = True
-
-anim_at_table     = []    # list with cards to animate(fron player to attack table)
-anim_def_table    = []    # list with cards to animate(fron player to defence table)
+anim_bool         = True
+# throw card out animation
+anim_at_throw     = []
+throw_at_bool     = True
+anim_def_throw    = []
+throw_def_bool    = True
+# grabbing animation
+grab_it           = 0
 want_to_grab      = 0     # if any player is grabbing cards from the table
 able_to_grab      = False # player permission to grab card from the table
-
 anim_at_player    = []
+animated_at_cards = []
+grab_at_bool      = True
 anim_def_player   = []
-
-anim_at_throw     = []
-anim_def_throw    = []
-anim_throw_activ  = False
-anim6_bool        = True
-anim7_bool        = True
-
+animated_def_cards= []
+grab_def_bool     = True
+# putting cards on the deck animation
+anim_at_table     = []    # list with cards to animate(fron player to attack table)
+table_at_bool     = True
+anim_def_table    = []    # list with cards to animate(fron player to defence table)
+table_def_bool    = True
+# taking from the deck animation
 take_f_deck_queue = []    # stores data about taking cards from the deck
 able_to_take      = True
-
-all_addable_cards = []    # list of cards to add when attacking (only numbers)
-
+# if cards were beaten already
 cards_been_beaten = False
-win_happened      = False
-
-grab_it = 0
-animated_at_cards = []
-animated_def_cards = []
-
 # menu
-pause_mode = False
-menu_mode  = True
-
+pause_mode        = False
+menu_mode         = True
 
 # starting values
+active_game       = False
+all_addable_cards = []    # list of cards to add when attacking (only numbers)
+win_happened      = False
 attack_player = 0
-running = True
-anim2_bool = True
-anim3_bool = True
-anim4_bool = True
-anim5_bool = True
 card_pos_dict = {
     'm_size_x' : 95,
     'm_size_y' : 55,
@@ -62,6 +56,7 @@ card_pos_dict = {
     'menu_down': 0,
 
 }
+card_pos_dict_copy = card_pos_dict.copy()
 
 """Game Functions"""
 
@@ -78,11 +73,8 @@ def create_deck():
 
 def take_from_deck(animation_active = True):
     """fill player deck with cards"""
-    global table_at_deck, table_def_deck, animated_at_cards, animated_def_cards, anim_throw_activ
-    anim_throw_activ = False
-    if anim_at_throw or anim_def_throw:
-        anim_throw_activ = True
-    if take_f_deck_queue and not anim_at_player and not anim_throw_activ and not menu_mode:
+    global table_at_deck, table_def_deck, animated_at_cards, animated_def_cards
+    if take_f_deck_queue and not anim_at_player and not anim_at_throw and not anim_def_throw and not menu_mode:
         table_at_deck = []
         table_def_deck = []
         animated_at_cards = []
@@ -158,7 +150,7 @@ def win_check():
         end_text = end_font.render(final_text, True, (0, 0, 0))
         screen.blit(end_text, (end_x_cord, 350))
     global menu_mode, win_happened
-    if not card_deck and not anim_def_table and not take_f_deck_queue and not pause_mode and not menu_mode:
+    if not card_deck and free_to_move():
         if not player1_deck:
             end_screen(500,'You Win!')
             win_happened = True
@@ -377,12 +369,55 @@ def bot_brain(player_deck):
     return
 
 def game_reset():
-    pass
+    global card_deck, player1_deck, player2_deck, table_at_deck, table_def_deck, animation_list, card_pos_dict
+    global anim_bool, anim_at_throw,throw_at_bool,anim_def_throw,throw_def_bool,grab_it,want_to_grab
+    global able_to_grab,anim_at_player, animated_at_cards,grab_at_bool,anim_def_player,animated_def_cards
+    global grab_def_bool,anim_at_table,table_at_bool,anim_def_table,table_def_bool,able_to_take,cards_been_beaten
+    global take_f_deck_queue
+    # resetting everything
+    card_deck = []
+    player1_deck = []
+    player2_deck = []
+    table_at_deck = []
+    table_def_deck = []
+    animation_list = []
+    anim_bool = True
+    anim_at_throw = []
+    throw_at_bool = True
+    anim_def_throw = []
+    throw_def_bool = True
+    grab_it = 0
+    want_to_grab = 0
+    able_to_grab = False
+    anim_at_player = []
+    animated_at_cards = []
+    grab_at_bool = True
+    anim_def_player = []
+    animated_def_cards = []
+    grab_def_bool = True
+    anim_at_table = []
+    table_at_bool = True
+    anim_def_table = []
+    table_def_bool = True
+    take_f_deck_queue = []
+    able_to_take = True
+    cards_been_beaten = False
+    card_pos_dict = card_pos_dict_copy
+    # creating decks
+    create_deck()
+    take_f_deck_queue.append(1)
+    take_f_deck_queue.append(2)
+    who_moves_first()
+    # remaking the trump card
+    textures['trump_num'] = pygame.image.load(f"textures/{trump_card[-2:]}.png").convert_alpha()
+    textures['trump_suit'] = pygame.image.load(f"textures/{trump_card[0]}.png").convert_alpha()
+    textures['trump_num'] = pygame.transform.scale(textures['trump_num'], (95, 135))
+    textures['trump_suit'] = pygame.transform.scale(textures['trump_suit'], (95, 135))
+    textures['trump_num'] = pygame.transform.rotate(textures['trump_num'], 90)
+    textures['trump_suit'] = pygame.transform.rotate(textures['trump_suit'], 90)
 
-# creating decks
+# creating fake deck
 create_deck()
-take_f_deck_queue.append(1)
-take_f_deck_queue.append(2)
 
 # pygame initialization
 pygame.init()
@@ -423,14 +458,11 @@ for texture in textures.keys():
     if texture not in ['button','table','loading','menu','menu_button']:
         textures[texture] = pygame.transform.scale(textures[texture], (95, 135))
 textures['trump_empty'] = pygame.transform.rotate(textures['trump_empty'], 90)
-textures['trump_num'] = pygame.transform.rotate(textures['trump_num'], 90)
-textures['trump_suit'] = pygame.transform.rotate(textures['trump_suit'], 90)
 textures['button'] = pygame.transform.scale(textures['button'], (95, 55))
 textures['table'] = pygame.transform.scale(textures['table'], (1050, 325))
 textures['loading'] = pygame.transform.scale(textures['loading'], (300, 75))
 textures['menu'] = pygame.transform.scale(textures['menu'], (640, 450))
 textures['pause'] = pygame.transform.scale(textures['pause'], (80, 80))
-
 
 # all buttons (start x start y length x length y)
 button_P = pygame.Rect(1400, 15, 80, 80)
@@ -455,15 +487,13 @@ all_buttons = [
     button_7,button_8,button_9,button_10,button_11,button_12,
 ]
 
-# deciding who moves first
-who_moves_first()
 # main cycle
+running = True
 while running:
     # timer
     timer(player1_deck)
     # take from the deck
     take_from_deck()
-
     # bot making a move
     all_addable_cards_calc()
     bot_brain(player2_deck)
@@ -611,7 +641,7 @@ while running:
     for card in table_at_deck:
         # throwing card off animation
         if anim_at_throw and card == anim_at_throw[0]:
-            if anim6_bool:
+            if throw_at_bool:
                 at_start_x = x_cord
                 at_start_y = y_cord + y_add
                 at_final_x = -200
@@ -620,20 +650,20 @@ while running:
                 at_diff_y = (at_final_y - at_start_y) / 10
                 at_active_x = at_start_x
                 at_active_y = at_start_y
-                anim6_bool = False
+                throw_at_bool = False
                 card_at_anim_rn = card
             if at_start_x <= at_active_x <= at_final_x - at_diff_x or at_start_x >= at_active_x >= at_final_x - at_diff_x:
                 at_active_x += at_diff_x
                 at_active_y += at_diff_y
             else:
-                anim6_bool = True
+                throw_at_bool = True
                 animated_at_cards.append(card_at_anim_rn)
                 del anim_at_throw[0]
             x_output = at_active_x
             y_output = at_active_y
         # grabbing cards animation
         elif anim_at_player and anim_at_player[0][0] == card:
-            if anim4_bool:
+            if grab_at_bool:
                 ap_start_x = x_cord
                 ap_start_y = y_cord + y_add
                 ap_final_x = 15 + 105 * anim_at_player[0][2]
@@ -645,20 +675,20 @@ while running:
                 ap_diff_y = (ap_final_y - ap_start_y) / 10
                 ap_active_x = ap_start_x
                 ap_active_y = ap_start_y
-                anim4_bool = False
+                grab_at_bool = False
                 card_at_anim_rn = card
             if ap_start_y <= ap_active_y <= ap_final_y - ap_diff_y or ap_start_y >= ap_active_y >= ap_final_y - ap_diff_y:
                 ap_active_x += ap_diff_x
                 ap_active_y += ap_diff_y
             else:
-                anim4_bool = True
+                grab_at_bool = True
                 animated_at_cards.append(card_at_anim_rn)
                 del anim_at_player[0]
             x_output = ap_active_x
             y_output = ap_active_y
         # putting cards on the deck animation
         elif anim_at_table and anim_at_table[-1][0] == card:
-            if anim3_bool:
+            if table_at_bool:
                 a_start_x = 15 + 105 * anim_at_table[-1][2]
                 if anim_at_table[-1][1] == 1:
                     a_start_y = 600
@@ -670,12 +700,12 @@ while running:
                 a_diff_y = (a_final_y - a_start_y) / 10
                 a_active_x = a_start_x
                 a_active_y = a_start_y
-                anim3_bool = False
+                table_at_bool = False
             if a_start_x <= a_active_x <= a_final_x - a_diff_x or a_start_x >= a_active_x >= a_final_x - a_diff_x:
                 a_active_x += a_diff_x
                 a_active_y += a_diff_y
             else:
-                anim3_bool = True
+                table_at_bool = True
                 del anim_at_table[-1]
             x_output = a_active_x
             y_output = a_active_y
@@ -698,7 +728,7 @@ while running:
     for card in table_def_deck:
         # throwing card off animation
         if anim_def_throw and card == anim_def_throw[0]:
-            if anim7_bool:
+            if throw_def_bool:
                 dt_start_x = x_cord
                 dt_start_y = y_cord + y_add
                 dt_final_x = -200
@@ -707,20 +737,20 @@ while running:
                 dt_diff_y = (dt_final_y - dt_start_y) / 10
                 dt_active_x = dt_start_x
                 dt_active_y = dt_start_y
-                anim7_bool = False
+                throw_def_bool = False
                 card_def_anim_rn = card
             if dt_start_x <= dt_active_x <= dt_final_x - dt_diff_x or dt_start_x >= dt_active_x >= dt_final_x - dt_diff_x:
                 dt_active_x += dt_diff_x
                 dt_active_y += dt_diff_y
             else:
-                anim7_bool = True
+                throw_def_bool = True
                 animated_def_cards.append(card_def_anim_rn)
                 del anim_def_throw[0]
             x_output = dt_active_x
             y_output = dt_active_y
         # grabbing cards animation
         elif anim_def_player and anim_def_player[0][0] == card:
-            if anim5_bool:
+            if grab_def_bool:
                 dp_start_x = x_cord
                 dp_start_y = y_cord + y_add
                 dp_final_x = 15  + 105 * anim_def_player[0][2]
@@ -732,13 +762,13 @@ while running:
                 dp_diff_y = (dp_final_y - dp_start_y) / 10
                 dp_active_x = dp_start_x
                 dp_active_y = dp_start_y
-                anim5_bool = False
+                grab_def_bool = False
                 card_def_anim_rn = card
             if dp_start_y <= dp_active_y <= dp_final_y - dp_diff_y or dp_start_y >= dp_active_y >= dp_final_y - dp_diff_y:
                 dp_active_x += dp_diff_x
                 dp_active_y += dp_diff_y
             else:
-                anim5_bool = True
+                grab_def_bool = True
                 animated_def_cards.append(card_def_anim_rn)
                 del anim_def_player[0]
             x_output = dp_active_x
@@ -750,19 +780,19 @@ while running:
                 d_start_y = 60
             else:
                 d_start_y = 600
-            if anim2_bool:
+            if table_def_bool:
                 d_final_x = 60 + 125 * anim_def_table[-1][3]
                 d_final_y = y_cord
                 d_diff_x = (d_final_x - d_start_x) / 10
                 d_diff_y = (d_final_y - d_start_y) / 10
                 d_active_x = d_start_x
                 d_active_y = d_start_y
-                anim2_bool = False
+                table_def_bool = False
             if d_start_x <= d_active_x <= d_final_x - d_diff_x or d_start_x >= d_active_x >= d_final_x - d_diff_x:
                 d_active_x += d_diff_x
                 d_active_y += d_diff_y
             else:
-                anim2_bool = True
+                table_def_bool = True
                 del anim_def_table[-1]
             x_output = d_active_x
             y_output = d_active_y
