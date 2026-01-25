@@ -41,6 +41,12 @@ win_happened      = False
 # starting values
 all_addable_cards = []    # list of cards to add when attacking (only numbers)
 card_anim_dict    = {}
+trump_match = {
+    'h' : 'r',
+    'd' : 'r',
+    'c' : 'b',
+    's' : 'b'
+}
 card_pos_dict = {
     'anim_but'  : 0,
     'anim_trump': 0,
@@ -442,10 +448,10 @@ def game_init():
     take_f_deck_queue.append(2)
     who_moves_first()
     # remaking the trump card
-    textures['trump_num'] = pygame.image.load(resource_path(f"textures/{trump_card[-2:]}.png")).convert_alpha()
+    textures['trump_num'] = pygame.image.load(resource_path(f"textures/{trump_card[-2:]  + trump_match[trump_card[0]]}.png")).convert_alpha()
     textures['trump_suit'] = pygame.image.load(resource_path(f"textures/{trump_card[0]}.png")).convert_alpha()
-    textures['trump_num'] = pygame.transform.scale(textures['trump_num'], (95, 135))
-    textures['trump_suit'] = pygame.transform.scale(textures['trump_suit'], (95, 135))
+    textures['trump_num'] = pygame.transform.scale(textures['trump_num'], (120, 175))
+    textures['trump_suit'] = pygame.transform.scale(textures['trump_suit'], (120, 175))
     textures['trump_num'] = pygame.transform.rotate(textures['trump_num'], 90)
     textures['trump_suit'] = pygame.transform.rotate(textures['trump_suit'], 90)
 
@@ -461,15 +467,24 @@ background_color = (0, 55, 0)
 
 # textures
 textures = {
-    '15'          : pygame.image.load(resource_path("textures/15.png")).convert_alpha(),
-    '14'          : pygame.image.load(resource_path("textures/14.png")).convert_alpha(),
-    '13'          : pygame.image.load(resource_path("textures/13.png")).convert_alpha(),
-    '12'          : pygame.image.load(resource_path("textures/12.png")).convert_alpha(),
-    '10'          : pygame.image.load(resource_path("textures/10.png")).convert_alpha(),
-    '09'          : pygame.image.load(resource_path("textures/09.png")).convert_alpha(),
-    '08'          : pygame.image.load(resource_path("textures/08.png")).convert_alpha(),
-    '07'          : pygame.image.load(resource_path("textures/07.png")).convert_alpha(),
-    '06'          : pygame.image.load(resource_path("textures/06.png")).convert_alpha(),
+    '15r'         : pygame.image.load(resource_path("textures/15r.png")).convert_alpha(),
+    '14r'         : pygame.image.load(resource_path("textures/14r.png")).convert_alpha(),
+    '13r'         : pygame.image.load(resource_path("textures/13r.png")).convert_alpha(),
+    '12r'         : pygame.image.load(resource_path("textures/12r.png")).convert_alpha(),
+    '10r'         : pygame.image.load(resource_path("textures/10r.png")).convert_alpha(),
+    '09r'         : pygame.image.load(resource_path("textures/09r.png")).convert_alpha(),
+    '08r'         : pygame.image.load(resource_path("textures/08r.png")).convert_alpha(),
+    '07r'         : pygame.image.load(resource_path("textures/07r.png")).convert_alpha(),
+    '06r'         : pygame.image.load(resource_path("textures/06r.png")).convert_alpha(),
+    '15b'         : pygame.image.load(resource_path("textures/15b.png")).convert_alpha(),
+    '14b'         : pygame.image.load(resource_path("textures/14b.png")).convert_alpha(),
+    '13b'         : pygame.image.load(resource_path("textures/13b.png")).convert_alpha(),
+    '12b'         : pygame.image.load(resource_path("textures/12b.png")).convert_alpha(),
+    '10b'         : pygame.image.load(resource_path("textures/10b.png")).convert_alpha(),
+    '09b'         : pygame.image.load(resource_path("textures/09b.png")).convert_alpha(),
+    '08b'         : pygame.image.load(resource_path("textures/08b.png")).convert_alpha(),
+    '07b'         : pygame.image.load(resource_path("textures/07b.png")).convert_alpha(),
+    '06b'         : pygame.image.load(resource_path("textures/06b.png")).convert_alpha(),
     'h'           : pygame.image.load(resource_path("textures/h.png")).convert_alpha(),
     'd'           : pygame.image.load(resource_path("textures/d.png")).convert_alpha(),
     's'           : pygame.image.load(resource_path("textures/s.png")).convert_alpha(),
@@ -477,10 +492,11 @@ textures = {
     'table'       : pygame.image.load(resource_path("textures/table.png")).convert_alpha(),
     'button'      : pygame.image.load(resource_path("textures/button.png")).convert_alpha(),
     'empty_card'  : pygame.image.load(resource_path("textures/empty_card.png")).convert_alpha(),
+    'beaten_card' : pygame.image.load(resource_path("textures/beaten_card.png")).convert_alpha(),
     'face_down'   : pygame.image.load(resource_path("textures/face_down.png")).convert_alpha(),
     'deck_side'   : pygame.image.load(resource_path("textures/deck_side.png")).convert_alpha(),
     'trump_empty' : pygame.image.load(resource_path("textures/empty_card.png")).convert_alpha(),
-    'trump_num'   : pygame.image.load(resource_path(f"textures/{trump_card[-2:]}.png")).convert_alpha(),
+    'trump_num'   : pygame.image.load(resource_path(f"textures/{trump_card[-2:]  + trump_match[trump_card[0]]}.png")).convert_alpha(),
     'trump_suit'  : pygame.image.load(resource_path(f"textures/{trump_card[0]}.png")).convert_alpha(),
     'loading'     : pygame.image.load(resource_path("textures/loading.png")).convert_alpha(),
     'menu'        : pygame.image.load(resource_path("textures/menu.png")).convert_alpha(),
@@ -491,10 +507,10 @@ textures = {
 # resizing
 for texture in textures.keys():
     if texture not in ['button','table','loading','menu','menu_button','win_panel']:
-        textures[texture] = pygame.transform.scale(textures[texture], (95, 135))
+        textures[texture] = pygame.transform.scale(textures[texture], (120, 175))
 textures['trump_empty'] = pygame.transform.rotate(textures['trump_empty'], 90)
 textures['button'] = pygame.transform.scale(textures['button'], (95, 55))
-textures['table'] = pygame.transform.scale(textures['table'], (1050, 325))
+textures['table'] = pygame.transform.scale(textures['table'], (1300, 325))
 textures['loading'] = pygame.transform.scale(textures['loading'], (300, 75))
 textures['menu'] = pygame.transform.scale(textures['menu'], (640, 450))
 textures['pause'] = pygame.transform.scale(textures['pause'], (80, 80))
@@ -504,7 +520,7 @@ textures['win_panel'] = pygame.transform.scale(textures['win_panel'], (1500, 240
 button_P = pygame.Rect(1400, 15, 80, 80)
 button_U = pygame.Rect(525, 320, 420, 100)
 button_D = pygame.Rect(525, 445, 420, 100)
-button_T = pygame.Rect(800, 340, 135, 95)
+button_T = pygame.Rect(1030, 312, 175, 120)
 button_0 = pygame.Rect(890, 470, 95, 55)
 all_buttons = {}
 for index in range(36):
@@ -514,11 +530,11 @@ all_table_buttons = {}
 # main cycle
 running = True
 while running:
-    x_add_player_deck = 105 if len(player1_deck) <= 10 else 105 - (len(player1_deck) - 10) * 3
-    x_add_bot_deck = 105 if len(player2_deck) <= 10 else 105 - (len(player2_deck) - 10) * 3
+    x_add_player_deck = (125 if len(player1_deck) <= 10 else 125 - (len(player1_deck) - 10) * 6) if len(player1_deck) < 22 else 59
+    x_add_bot_deck = (125 if len(player2_deck) <= 10 else 125 - (len(player2_deck) - 10) * 6) if len(player2_deck) < 22 else 59
     x_cord = 15
     for button in all_buttons.keys():
-        all_buttons[button] = pygame.Rect(x_cord, 600, 95, 135)
+        all_buttons[button] = pygame.Rect(x_cord, 600, 120, 175)
         x_cord += x_add_player_deck
     for index in range(6):
         y_add = 0
@@ -527,7 +543,7 @@ while running:
         elif grab_it == 2:
             y_add = -100
         all_table_buttons["button_" + str(index + 1)] = pygame.Rect(
-            40 + 125 * index, 340 + y_add if index % 2 == 0 else 310 + y_add, 115, 155)
+            40 + 145 * index, 330 + y_add if index % 2 == 0 else 300 + y_add, 150, 215)
     # take from the deck
     take_from_deck()
     # bot making a move
@@ -623,17 +639,17 @@ while running:
                 card_pos_dict['anim_trump'] += 4
         elif card_pos_dict['anim_trump'] > 0:
             card_pos_dict['anim_trump'] -= 4
-        screen.blit(textures['trump_empty'], (800 - card_pos_dict['anim_trump'], 340))
-        screen.blit(textures['trump_suit'], (800 - card_pos_dict['anim_trump'], 340))
-        screen.blit(textures['trump_num'], (800 - card_pos_dict['anim_trump'], 340))
+        screen.blit(textures['trump_empty'], (1030 - card_pos_dict['anim_trump'], 312))
+        screen.blit(textures['trump_suit'], (1030 - card_pos_dict['anim_trump'], 312))
+        screen.blit(textures['trump_num'], (1030 - card_pos_dict['anim_trump'], 312))
         # deck output
         if len(card_deck) > 1:
-            screen.blit(textures['face_down'], (890, 320))
-            screen.blit(textures['deck_side'], (875, 320))
-            pygame.draw.rect(screen, (255, 255, 255), (890, 365, 95, 45))
+            screen.blit(textures['deck_side'], (1125, 285))
+            screen.blit(textures['face_down'], (1140, 285))
+            pygame.draw.rect(screen, (255, 255, 255), (1140, 355, 120, 45))
             font = pygame.font.Font(resource_path("font/pixel_font.ttf"), 40)
             text = font.render(str(len(card_deck)), True, (0, 0, 0))
-            screen.blit(text, (900, 370))
+            screen.blit(text, (1163, 360))
     else:
         screen.blit(textures['trump_suit'], (800, 340))
 
@@ -643,10 +659,10 @@ while running:
         red_color = 100
     elif red_color < 255:
         red_color += 5
-    pygame.draw.rect(screen, (0, 0, 0), (1100, 360, 300, 55))
-    pygame.draw.rect(screen, (red_color, 0, 0), (1100, 360, x_length, 55))
-    pygame.draw.rect(screen, background_color, (1400, 360, 55, 55))
-    screen.blit(textures['loading'], (1100, 350))
+    pygame.draw.rect(screen, (0, 0, 0), (1100, 560, 300, 55))
+    pygame.draw.rect(screen, (red_color, 0, 0), (1100, 560, x_length, 55))
+    pygame.draw.rect(screen, background_color, (1400, 560, 55, 55))
+    screen.blit(textures['loading'], (1100, 550))
 
     # opponent cards output
     for index, card in enumerate(player2_deck):
@@ -663,7 +679,7 @@ while running:
             card_pop = True
         # output
         if card_pop:
-            screen.blit(textures['face_down'], (15 + x_add_bot_deck * index, 60))
+            screen.blit(textures['face_down'], (15 + x_add_bot_deck * index, 30))
             # to see bot cards
 
     # player cards output
@@ -696,7 +712,7 @@ while running:
         # output
         if card_pop:
             screen.blit(textures['empty_card'], (x_cord, y_cord))
-            screen.blit(textures[card[-2:]], (x_cord, y_cord))
+            screen.blit(textures[card[-2:] + trump_match[card[0]]], (x_cord, y_cord))
             screen.blit(textures[card[0]], (x_cord, y_cord))
 
     # table output
@@ -732,8 +748,8 @@ while running:
         else:
             card_anim_dict[str(51 + index)] = 0
         anim_add = card_anim_dict[str(51 + index)]
-        x_cord = 40 + 125 * index - anim_add
-        y_cord = 340 + y_add - anim_add if index % 2 == 0 else 310 + y_add - anim_add
+        x_cord = 40 + 145 * index - anim_add
+        y_cord = 330 + y_add - anim_add if index % 2 == 0 else 300 + y_add - anim_add
         # throwing card off animation
         if anim_at_throw and card == anim_at_throw[0]:
             x_cord, y_cord = animation_calc('throw_at_bool', x_cord, y_cord, -200, 330,
@@ -742,26 +758,27 @@ while running:
         elif anim_at_player and anim_at_player[0][0] == card:
             x_add_deck = x_add_player_deck if anim_at_player[0][-1] == 1 else x_add_bot_deck
             x_cord, y_cord = animation_calc('grab_at_bool',
-                x_cord, y_cord, 15 + x_add_deck * anim_at_player[0][2], 600 if anim_at_player[0][-1] == 1 else 60,
+                x_cord, y_cord, 15 + x_add_deck * anim_at_player[0][2], 600 if anim_at_player[0][-1] == 1 else 30,
                 'grab_at', anim_at_player, (card, 'remember_at_card'))
         # putting cards on the table animation
         elif anim_at_table and anim_at_table[-1][0] == card:
-            table_at_start_y = 600 if anim_at_table[-1][1] == 1 else 60
+            table_at_start_y = 600 if anim_at_table[-1][1] == 1 else 30
             x_add_deck = x_add_player_deck if anim_at_table[-1][1] == 1 else x_add_bot_deck
             x_cord, y_cord = animation_calc('table_at_bool',
-                15 + x_add_deck * anim_at_table[-1][2], table_at_start_y, 40 + 125 * anim_at_table[-1][3], y_cord,
+                15 + x_add_deck * anim_at_table[-1][2], table_at_start_y, 40 + 145 * anim_at_table[-1][3], y_cord,
                 'table_at', anim_at_table)
         # final output
-        screen.blit(textures['empty_card'], (x_cord, y_cord))
-        screen.blit(textures[card[-2:]], (x_cord, y_cord))
+        output_card = 'empty_card' if index >= len(table_def_deck) else 'beaten_card'
+        screen.blit(textures[output_card], (x_cord, y_cord))
+        screen.blit(textures[card[-2:] + trump_match[card[0]]], (x_cord, y_cord))
         screen.blit(textures[card[0]], (x_cord, y_cord))
     # defence cards and crazy animation calculations
     for index, card in enumerate(table_def_deck):
         if card in animated_def_cards:
             continue
         anim_add = card_anim_dict[str(51 + index)]
-        x_cord = 60 + 125 * index + anim_add
-        y_cord = 360 + y_add + anim_add if index % 2 == 0 else 330 + y_add + anim_add
+        x_cord = 70 + 145 * index + anim_add
+        y_cord = 370 + y_add + anim_add if index % 2 == 0 else 340 + y_add + anim_add
         # throwing card off animation
         if anim_def_throw and card == anim_def_throw[0]:
             x_cord, y_cord = animation_calc('throw_def_bool', x_cord, y_cord, -200, 330,
@@ -770,25 +787,25 @@ while running:
         elif anim_def_player and anim_def_player[0][0] == card:
             x_add_deck = x_add_player_deck if anim_def_player[0][-1] == 1 else x_add_bot_deck
             x_cord, y_cord = animation_calc('grab_def_bool',
-                x_cord, y_cord, 15 + x_add_deck * anim_def_player[0][2], 600 if anim_def_player[0][-1] == 1 else 60,
+                x_cord, y_cord, 15 + x_add_deck * anim_def_player[0][2], 600 if anim_def_player[0][-1] == 1 else 30,
                 'grab_def', anim_def_player, (card,'remember_def_card'))
         # putting cards on the table animation
         elif anim_def_table and anim_def_table[-1][0] == card:
-            table_def_start_y = 60 if anim_def_table[-1][1] == 1 else 600
+            table_def_start_y = 30 if anim_def_table[-1][1] == 1 else 600
             x_add_deck = x_add_bot_deck if anim_def_table[-1][1] == 1 else x_add_player_deck
             x_cord, y_cord = animation_calc('table_def_bool',
-                15 + x_add_deck * anim_def_table[-1][2], table_def_start_y, 60 + 125 * anim_def_table[-1][3], y_cord,
+                15 + x_add_deck * anim_def_table[-1][2], table_def_start_y, 70 + 145 * anim_def_table[-1][3], y_cord,
                 'table_def', anim_def_table)
         # final output
         screen.blit(textures['empty_card'], (x_cord, y_cord))
-        screen.blit(textures[card[-2:]], (x_cord, y_cord))
+        screen.blit(textures[card[-2:] + trump_match[card[0]]], (x_cord, y_cord))
         screen.blit(textures[card[0]], (x_cord, y_cord))
 
     # taking cards from deck animation
     if animation_list:
         x_add_deck = x_add_player_deck if animation_list[0][0] == 'pl1' else x_add_bot_deck
         animation_calc('anim_bool',
-            890, 320, 15 + x_add_deck * animation_list[0][1] - 1, 600 if animation_list[0][0] == 'pl1' else 60,
+            1140, 285, 15 + x_add_deck * animation_list[0][1] - 1, 600 if animation_list[0][0] == 'pl1' else 30,
             'deck', animation_list, (card,'take_from_deck'))
 
     # menu
