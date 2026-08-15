@@ -1,4 +1,4 @@
-from enum import Enum, auto
+from enum import Enum
 
 class Suit(Enum):
     D = 0
@@ -13,6 +13,7 @@ class Suit(Enum):
         return str(self)
 
 
+
 class Card:
     def __init__(self, num: int, suit: Suit):
         self.suit = suit
@@ -23,3 +24,9 @@ class Card:
 
     def __repr__(self):
         return str(self)
+
+    def __eq__(self, other):
+        return self.num == other.num and self.suit == other.suit
+    
+    def __hash__(self):
+        return hash((self.num, self.suit))
